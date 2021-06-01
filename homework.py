@@ -51,7 +51,7 @@ def parse_homework_status(homework):
 
 def get_homework_statuses(current_timestamp):
     if current_timestamp is None:
-        current_timestamp = 0
+        current_timestamp = int(time.time())
     headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
     params = {'from_date': current_timestamp}
     homework_statuses = requests.get(url, headers=headers, params=params)
@@ -65,7 +65,7 @@ def send_message(message, bot_client):
 
 def main():
     logger.debug('Bot started')
-    current_timestamp = 0
+    current_timestamp = int(time.time())
     while True:
         try:
             new_homework = get_homework_statuses(current_timestamp)
@@ -75,9 +75,9 @@ def main():
                     bot
                 )
             current_timestamp = new_homework.get(
-                'current_date', int(time.time())
+                'current_date', current_timestamp
             )
-            time.sleep(10)
+            time.sleep(1200)
         except Exception as e:
             logger.error(f'Бот столкнулся с ошибкой: {e}')
             time.sleep(120)
