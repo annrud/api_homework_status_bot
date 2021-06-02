@@ -49,14 +49,16 @@ def parse_homework_status(homework):
         raise Exception('В ответе отсутствует один из обязательных ключей: '
                         '"homework_name", "status"')
     status_verdict = {
-        'reviewing': 'взята в ревью.',
-        'rejected': 'проверена.\n\nК сожалению в работе нашлись ошибки.',
-        'approved': ('проверена.\n\nРевьюеру всё понравилось, '
+        'reviewing': f'Работа "{homework_name}" взята в ревью.',
+        'rejected': (f'У вас проверили работу "{homework_name}".\n\n'
+                     'К сожалению в работе нашлись ошибки.'),
+        'approved': (f'У вас проверили работу "{homework_name}".\n\n'
+                     'Ревьюеру всё понравилось, '
                      'можно приступать к следующему уроку.'),
     }
     if status not in status_verdict.keys():
         raise Exception(f'Отсутствует вердикт для статуса: "{status}"')
-    return f'Работа "{homework_name}" {status_verdict[status]}'
+    return status_verdict[status]
 
 
 def get_homework_statuses(current_timestamp):
