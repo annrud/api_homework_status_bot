@@ -27,7 +27,8 @@ def init_logger(name, tg_bot, chat_id):
     th = TelegramLogsHandler(tg_bot, chat_id)
     th.setLevel(logging.ERROR)
     formatter = logging.Formatter(
-        '%(asctime)s, [%(levelname)s], %(name)s, %(message)s, %(filename)s:%(lineno)d'
+        '%(asctime)s, [%(levelname)s], %(name)s, '
+        '%(message)s, %(filename)s:%(lineno)d'
     )
     fh.setFormatter(formatter)
     th.setFormatter(formatter)
@@ -45,7 +46,8 @@ def parse_homework_status(homework):
     homework_name = homework.get('homework_name')
     status = homework.get('status')
     if homework_name is None or status is None:
-        raise Exception('В ответе отсутствует один из обязательных ключей: "homework_name", "status"')
+        raise Exception('В ответе отсутствует один из обязательных ключей: '
+                        '"homework_name", "status"')
     status_verdict = {
         'reviewing': 'взята в ревью.',
         'rejected': 'проверена.\n\nК сожалению в работе нашлись ошибки.',
