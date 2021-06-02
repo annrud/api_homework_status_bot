@@ -3,6 +3,7 @@ import os
 import time
 
 import requests
+import requests.exceptions
 from dotenv import load_dotenv
 from telegram import Bot
 
@@ -10,8 +11,15 @@ from telegram_log_handler import TelegramLogsHandler
 
 load_dotenv()
 
+PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+URL = 'https://praktikum.yandex.ru/api/user_api'
+STATUSES_METHOD = 'homework_statuses'
+
 
 def init_logger(name, tg_bot, chat_id):
+    """Инициализация логгера."""
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler('homework.log')
@@ -19,7 +27,7 @@ def init_logger(name, tg_bot, chat_id):
     th = TelegramLogsHandler(tg_bot, chat_id)
     th.setLevel(logging.ERROR)
     formatter = logging.Formatter(
-        '%(asctime)s, [%(levelname)s], %(name)s, %(message)s, %(filename)s'
+        '%(asctime)s, [%(levelname)s], %(name)s, %(message)s, %(filename)s:%(lineno)d'
     )
     fh.setFormatter(formatter)
     th.setFormatter(formatter)
@@ -28,42 +36,50 @@ def init_logger(name, tg_bot, chat_id):
     return logger
 
 
-PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-url = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
 bot = Bot(token=TELEGRAM_TOKEN)
 logger = init_logger('homework', bot, CHAT_ID)
 
 
 def parse_homework_status(homework):
-    homework_name = homework["homework_name"]
-    status = homework["status"]
-    if status == 'reviewing':
-        return f'Работа "{homework_name}" взята в ревью.'
-    if status == 'rejected':
-        verdict = 'К сожалению в работе нашлись ошибки.'
-    elif status == 'approved':
-        verdict = ('Ревьюеру всё понравилось, '
-                   'можно приступать к следующему уроку.')
-    return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+    """Парсинг данных JSON: получение статуса домашней работы."""
+    homework_name = homework.get('homework_name')
+    status = homework.get('status')
+    if homework_name is None or status is None:
+        raise Exception('В ответе отсутствует один из обязательных ключей: "homework_name", "status"')
+    status_verdict = {
+        'reviewing': 'взята в ревью.',
+        'rejected': 'проверена.\n\nК сожалению в работе нашлись ошибки.',
+        'approved': ('проверена.\n\nРевьюеру всё понравилось, '
+                     'можно приступать к следующему уроку.'),
+    }
+    if status not in status_verdict.keys():
+        raise Exception(f'Отсутствует вердикт для статуса: "{status}"')
+    return f'Работа "{homework_name}" {status_verdict[status]}'
 
 
 def get_homework_statuses(current_timestamp):
+    """Получение данных JSON от API практикума."""
     if current_timestamp is None:
         current_timestamp = int(time.time())
     headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
     params = {'from_date': current_timestamp}
-    homework_statuses = requests.get(url, headers=headers, params=params)
-    return homework_statuses.json()
+    url = '/'.join([URL, STATUSES_METHOD, ''])
+    try:
+        homework_statuses = requests.get(url, headers=headers, params=params)
+        return homework_statuses.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Бот столкнулся с ошибкой: {e}')
+        return {}
 
 
 def send_message(message, bot_client):
+    """Отправка сообщения в телеграм."""
     logger.info('Message sending')
     return bot_client.send_message(chat_id=CHAT_ID, text=message)
 
 
 def main():
+    """Запуск телеграм-бота."""
     logger.debug('Bot started')
     current_timestamp = int(time.time())
     while True:

@@ -2,6 +2,7 @@ import logging
 
 
 class TelegramLogsHandler(logging.Handler):
+    """Класс, обработчик логов который шлет ошибки в телеграм."""
     def __init__(self, tg_bot, chat_id):
         super().__init__()
         self.chat_id = chat_id
