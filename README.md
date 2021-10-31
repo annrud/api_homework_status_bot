@@ -9,7 +9,7 @@ rejected: в работе есть ошибки, нужно поправить.*
 ## Технологии:<br>
 api_homework_status_bot реализован с применением библиотеки python-telegram-bot для работы с Telegram Bot API.
 
-
+## Запуск проекта:
 1. Склонируйте репозиторий в свою рабочую директорию:<br>
 ```git clone https://github.com/annrud/api_homework_status_bot.git```
 2. Создайте и активируйте виртуальное окружение:<br>
